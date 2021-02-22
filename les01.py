@@ -24,7 +24,7 @@ from pathlib import Path
 class Parse5ka:
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36'}
 
-    def __init__(self, start_url:str, save_path: Path):
+    def __init__(self, start_url: str, save_path: Path):
         self.start_url = start_url
         self.save_path = save_path
 
