@@ -22,7 +22,9 @@ from pathlib import Path
 
 
 class Parse5ka:
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36'}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
+    }
 
     def __init__(self, start_url: str, save_path: Path):
         self.start_url = start_url
@@ -44,17 +46,17 @@ class Parse5ka:
         while url:
             response = self._get_response(url)
             data = response.json()
-            url = data['next']
-            for product in data['results']:
+            url = data["next"]
+            for product in data["results"]:
                 yield product
 
-    def _save(self, data:dict, file_path:Path ):
-        file_path.write_text(json.dumps(data, ensure_ascii=False), encoding='UTF-8')
+    def _save(self, data: dict, file_path: Path):
+        file_path.write_text(json.dumps(data, ensure_ascii=False), encoding="UTF-8")
 
 
-if __name__ == '__main__':
-    url = 'https://5ka.ru/api/v2/special_offers/'
-    save_path = Path(__file__).parent.joinpath('products')
+if __name__ == "__main__":
+    url = "https://5ka.ru/api/v2/special_offers/"
+    save_path = Path(__file__).parent.joinpath("products")
     if not save_path.exists():
         save_path.mkdir()
     parser = Parse5ka(url, save_path)

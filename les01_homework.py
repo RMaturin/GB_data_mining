@@ -22,8 +22,11 @@ import time
 import json
 from pathlib import Path
 
+
 class Parse5ka:
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36'}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
+    }
 
     def __init__(self, start_url: str, save_path: Path):
         self.start_url = start_url
@@ -45,32 +48,36 @@ class Parse5ka:
         while url:
             response = self._get_response(url)
             data = response.json()
-            url = data['next']
-            for product in data['results']:
+            url = data["next"]
+            for product in data["results"]:
                 yield product
 
-    def _save(self, data:dict, file_path:Path ):
-        file_path.write_text(json.dumps(data, ensure_ascii=False), encoding='UTF-8')
+    def _save(self, data: dict, file_path: Path):
+        file_path.write_text(json.dumps(data, ensure_ascii=False), encoding="UTF-8")
 
 
 # Как вы и советовали отнаследовался от класса который был на вебинаре
 class Parse5kaCategories(Parse5ka):
     def run(self):
-        categories_url = 'https://5ka.ru/api/v2/categories/'
+        categories_url = "https://5ka.ru/api/v2/categories/"
         categories_resp = self._get_response(categories_url)
         for i in categories_resp.json():
             categories_path = self.save_path.joinpath(f'{i["parent_group_code"]}.json')
-            product_list=[]
-            for product in self._parse(self.start_url+f'?categories={i["parent_group_code"]}'):
+            product_list = []
+            for product in self._parse(self.start_url + f'?categories={i["parent_group_code"]}'):
                 product_list.append(product)
-            if len(product_list) > 0:    # не создаю файл если в категории нет продуктов
-                categories = {'name': i['parent_group_name'], 'code': i['parent_group_code'], 'products': product_list}
+            if len(product_list) > 0:  # не создаю файл если в категории нет продуктов
+                categories = {
+                    "name": i["parent_group_name"],
+                    "code": i["parent_group_code"],
+                    "products": product_list,
+                }
                 self._save(categories, categories_path)
 
 
-if __name__ == '__main__':
-    url = 'https://5ka.ru/api/v2/special_offers/'
-    save_path = Path(__file__).parent.joinpath('categories')
+if __name__ == "__main__":
+    url = "https://5ka.ru/api/v2/special_offers/"
+    save_path = Path(__file__).parent.joinpath("categories")
     if not save_path.exists():
         save_path.mkdir()
     parser = Parse5kaCategories(url, save_path)
