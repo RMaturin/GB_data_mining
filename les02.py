@@ -1,9 +1,9 @@
 from pathlib import Path
 from urllib.parse import urljoin
 import time
-import json
 import requests
 import bs4
+import pymongo
 
 
 def get_save_path(dir_name):
@@ -18,9 +18,10 @@ class MagnitParse:
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
     }
 
-    def __init__(self, start_url, save_path):
+    def __init__(self, start_url, db_client):
         self.start_url = start_url
-        self.save_path = save_path
+        self.db = db_client["gd_data_mining"]
+        self.collection = self.db["magnit_products"]
 
     def _get_response(self, url):
         while True:
@@ -37,11 +38,9 @@ class MagnitParse:
     def run(self):
         soup = self._get_soup(self.start_url)
         catalog = soup.find("div", attrs={"class": "сatalogue__main"})
-        product_list = []
         for prod_a in catalog.find_all("a", recursive=False):
-            product_list.append(self._parse(prod_a))
-        product_path = self.save_path.joinpath("promo.json")
-        self._save(product_list, product_path)
+            product_data = self._parse(prod_a)
+            self._save(product_data)
 
     def get_template(self):
         return {
@@ -76,12 +75,14 @@ class MagnitParse:
                 pass
         return data
 
-    def _save(self, data: dict, file_path: Path):
-        file_path.write_text(json.dumps(data, ensure_ascii=False), encoding="UTF-8")
+    # def _save(self, data: dict, file_path: Path):
+    #     file_path.write_text(json.dumps(data, ensure_ascii=False), encoding="UTF-8")
+    def _save(self, data: dict):
+        self.collection.insert_one(data)
 
 
 if __name__ == "__main__":
     url = "https://magnit.ru/promo/"
-    save_path = get_save_path("magnit_product")
-    parser = MagnitParse(url, save_path)
+    db_client = pymongo.MongoClient("mongodb://localhost:27017")
+    parser = MagnitParse(url, db_client)
     parser.run()
