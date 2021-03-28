@@ -1,10 +1,15 @@
 import requests
 import bs4
+import datetime as dt
 from urllib.parse import urljoin
 from database.db import Database
 
 
 class GbBlogParse:
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
+    }
+
     def __init__(self, start_url, database: Database):
         self.db = database
         self.start_url = start_url
@@ -20,7 +25,7 @@ class GbBlogParse:
         return task
 
     def _get_response(self, url):
-        response = requests.get(url)
+        response = requests.get(url, headers=self.headers)
         return response
 
     def _get_soup(self, url):
@@ -28,16 +33,22 @@ class GbBlogParse:
         return soup
 
     def parse_post(self, url, soup):
-        # image = soup.find("div", attrs={"class": "hidden", "itemprop": "image"}).text
         author_tag = soup.find("div", attrs={"itemprop": "author"})
+        author_href = author_tag.parent.attrs.get("href")
+        author_id_pos = author_href.rfind("/") + 1
+        publish_date = soup.find("time", attrs={"itemprop": "datePublished"})
 
         data = {
             "post_data": {
+                "id": soup.find("comments").attrs.get("commentable-id"),
                 "title": soup.find("h1", attrs={"class": "blogpost-title"}).text,
                 "url": url,
+                "image": soup.find("div", attrs={"class": "hidden", "itemprop": "image"}).text,
+                "publication_date": dt.datetime.fromisoformat(publish_date.attrs.get("datetime")),
             },
             "author_data": {
-                "url": urljoin(url, author_tag.parent.attrs.get("href")),
+                "id": author_href[author_id_pos:],
+                "url": urljoin(url, author_href),
                 "name": author_tag.text,
             },
             "tags_data": [
@@ -45,6 +56,7 @@ class GbBlogParse:
                 for tag in soup.find_all("a", attrs={"class": "small"})
             ],
         }
+        print(1)
         return data
 
     def parse_feed(self, url, soup):
@@ -54,9 +66,11 @@ class GbBlogParse:
             for href in ul.find_all("a")
             if href.attrs.get("href")
         )
+        print(1)
         for pag_url in pag_urls:
             if pag_url not in self.done_urls:
                 self.tasks.append(self.get_task(pag_url, self.parse_feed))
+                self.done_urls.add(pag_url)
         post_items = soup.find("div", attrs={"class": "post-items-wrapper"})
         posts_urls = set(
             urljoin(url, href.attrs.get("href"))
@@ -66,6 +80,7 @@ class GbBlogParse:
         for post_url in posts_urls:
             if post_url not in self.done_urls:
                 self.tasks.append(self.get_task(post_url, self.parse_post))
+                self.done_urls.add(post_url)
 
     def run(self):
         for task in self.tasks:
