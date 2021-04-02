@@ -33,6 +33,7 @@ class GbBlogParse:
         return soup
 
     def parse_post(self, url, soup):
+        post_id = soup.find("comments").attrs.get("commentable-id")
         author_tag = soup.find("div", attrs={"itemprop": "author"})
         author_href = author_tag.parent.attrs.get("href")
         author_id_pos = author_href.rfind("/") + 1
@@ -40,7 +41,7 @@ class GbBlogParse:
 
         data = {
             "post_data": {
-                "id": soup.find("comments").attrs.get("commentable-id"),
+                "id": post_id,
                 "title": soup.find("h1", attrs={"class": "blogpost-title"}).text,
                 "url": url,
                 "image": soup.find("div", attrs={"class": "hidden", "itemprop": "image"}).text,
@@ -55,8 +56,14 @@ class GbBlogParse:
                 {"name": tag.text, "url": urljoin(url, tag.attrs.get("href"))}
                 for tag in soup.find_all("a", attrs={"class": "small"})
             ],
+            "comments_data": self._get_comments(post_id),
         }
-        print(1)
+        return data
+
+    def _get_comments(self, post_id):
+        api_path = f"/api/v2/comments?commentable_type=Post&commentable_id={post_id}&order=desc"
+        response = self._get_response(urljoin(self.start_url, api_path))
+        data = response.json()
         return data
 
     def parse_feed(self, url, soup):
@@ -66,7 +73,6 @@ class GbBlogParse:
             for href in ul.find_all("a")
             if href.attrs.get("href")
         )
-        print(1)
         for pag_url in pag_urls:
             if pag_url not in self.done_urls:
                 self.tasks.append(self.get_task(pag_url, self.parse_feed))
