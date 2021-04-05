@@ -47,6 +47,9 @@ class AutoyoulaSpider(scrapy.Spider):
         value2 = ".AdvertSpecs_data__xK2Qx::text"
         return {
             "title": lambda resp: resp.css(".AdvertCard_advertTitle__1S1Ak::text").extract_first(),
+            "price": lambda resp: float(
+                resp.css("div.AdvertCard_price__3dDCr::text").get().replace("\u2009", "")
+            ),
             "image": lambda resp: resp.css(
                 "figure.PhotoGallery_photo__36e_r img::attr(src)"
             ).extract(),
