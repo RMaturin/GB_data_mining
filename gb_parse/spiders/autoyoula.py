@@ -42,9 +42,9 @@ class AutoyoulaSpider(scrapy.Spider):
         self.db[self.name].insert_one(data)
 
     def _get_data_template(self):
-        n = ".AdvertSpecs_label__2JHnS::text"
-        v1 = ".AdvertSpecs_data__xK2Qx a::text"
-        v2 = ".AdvertSpecs_data__xK2Qx::text"
+        name = ".AdvertSpecs_label__2JHnS::text"
+        value1 = ".AdvertSpecs_data__xK2Qx a::text"
+        value2 = ".AdvertSpecs_data__xK2Qx::text"
         return {
             "title": lambda resp: resp.css(".AdvertCard_advertTitle__1S1Ak::text").extract_first(),
             "image": lambda resp: resp.css(
@@ -52,8 +52,8 @@ class AutoyoulaSpider(scrapy.Spider):
             ).extract(),
             "characteristics": lambda resp: [
                 {
-                    "name": itm.css(n).extract_first(),
-                    "value": (itm.css(v1).extract_first() or itm.css(v2).extract_first()),
+                    "name": itm.css(name).extract_first(),
+                    "value": (itm.css(value1).extract_first() or itm.css(value2).extract_first()),
                 }
                 for itm in resp.css("div.AdvertCard_specs__2FEHc .AdvertSpecs_row__ljPcX")
             ],
