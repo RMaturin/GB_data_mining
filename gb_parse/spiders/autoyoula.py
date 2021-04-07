@@ -1,5 +1,6 @@
 import scrapy
-from base64 import b64decode
+
+# from base64 import b64decode
 from ..loaders import AutoYoulaLoder
 
 
@@ -59,44 +60,44 @@ class AutoyoulaSpider(scrapy.Spider):
         #         print(exc)
         # yield data
 
-    def _get_data_template(self):
-        name = ".AdvertSpecs_label__2JHnS::text"
-        value1 = ".AdvertSpecs_data__xK2Qx a::text"
-        value2 = ".AdvertSpecs_data__xK2Qx::text"
-        return {
-            "title": lambda resp: resp.css(".AdvertCard_advertTitle__1S1Ak::text").extract_first(),
-            "price": lambda resp: float(
-                resp.css("div.AdvertCard_price__3dDCr::text").get().replace("\u2009", "")
-            ),
-            "image": lambda resp: resp.css(
-                "figure.PhotoGallery_photo__36e_r img::attr(src)"
-            ).extract(),
-            "characteristics": lambda resp: [
-                {
-                    "name": itm.css(name).extract_first(),
-                    "value": (itm.css(value1).extract_first() or itm.css(value2).extract_first()),
-                }
-                for itm in resp.css("div.AdvertCard_specs__2FEHc .AdvertSpecs_row__ljPcX")
-            ],
-            "descriptions": lambda resp: resp.css(
-                ".AdvertCard_descriptionInner__KnuRi::text"
-            ).extract_first(),
-            "author": lambda resp: self._get_data_from_script(resp).get("author"),
-            "phone": lambda resp: self._get_data_from_script(resp).get("phone"),
-        }
-
-    @staticmethod
-    def _get_data_from_script(response):
-        data = {}
-        for script in response.css("script::text").extract():
-            if "window.transitState = decodeURIComponent" in script:
-                start = script.rfind("youlaId%22%2C%22") + 16
-                end = script.find("%22%2C%22avatar")
-                if end == -1:
-                    end = script.find("%22%2C%22alias")
-                data["author"] = response.urljoin(f"/user/{script[start:end]}")
-
-                start = script.find("phone%22%2C%22") + 14
-                end = script.find("%3D%3D%22%2C%22")
-                data["phone"] = b64decode(b64decode(f"{script[start:end]}==")).decode("utf-8")
-        return data
+    # def _get_data_template(self):
+    #     name = ".AdvertSpecs_label__2JHnS::text"
+    #     value1 = ".AdvertSpecs_data__xK2Qx a::text"
+    #     value2 = ".AdvertSpecs_data__xK2Qx::text"
+    #     return {
+    #         "title": lambda resp: resp.css(".AdvertCard_advertTitle__1S1Ak::text").extract_first(),
+    #         "price": lambda resp: float(
+    #             resp.css("div.AdvertCard_price__3dDCr::text").get().replace("\u2009", "")
+    #         ),
+    #         "image": lambda resp: resp.css(
+    #             "figure.PhotoGallery_photo__36e_r img::attr(src)"
+    #         ).extract(),
+    #         "characteristics": lambda resp: [
+    #             {
+    #                 "name": itm.css(name).extract_first(),
+    #                 "value": (itm.css(value1).extract_first() or itm.css(value2).extract_first()),
+    #             }
+    #             for itm in resp.css("div.AdvertCard_specs__2FEHc .AdvertSpecs_row__ljPcX")
+    #         ],
+    #         "descriptions": lambda resp: resp.css(
+    #             ".AdvertCard_descriptionInner__KnuRi::text"
+    #         ).extract_first(),
+    #         "author": lambda resp: self._get_data_from_script(resp).get("author"),
+    #         "phone": lambda resp: self._get_data_from_script(resp).get("phone"),
+    #     }
+    #
+    # @staticmethod
+    # def _get_data_from_script(response):
+    #     data = {}
+    #     for script in response.css("script::text").extract():
+    #         if "window.transitState = decodeURIComponent" in script:
+    #             start = script.rfind("youlaId%22%2C%22") + 16
+    #             end = script.find("%22%2C%22avatar")
+    #             if end == -1:
+    #                 end = script.find("%22%2C%22alias")
+    #             data["author"] = response.urljoin(f"/user/{script[start:end]}")
+    #
+    #             start = script.find("phone%22%2C%22") + 14
+    #             end = script.find("%3D%3D%22%2C%22")
+    #             data["phone"] = b64decode(b64decode(f"{script[start:end]}==")).decode("utf-8")
+    #     return data
