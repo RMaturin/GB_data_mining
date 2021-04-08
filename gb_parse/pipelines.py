@@ -20,5 +20,5 @@ class GbParseMongoPipeline:
         self.db = db_client["gd_data_mining"]
 
     def process_item(self, item, spider):
-        self.db[spider.name].insert_one(item)
+        self.db[spider.name].update_one({"url": item["url"]}, {"$set": item}, upsert=True)
         return item
