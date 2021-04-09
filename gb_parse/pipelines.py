@@ -1,0 +1,24 @@
+# Define your item pipelines here
+#
+# Don't forget to add your pipeline to the ITEM_PIPELINES setting
+# See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
+
+
+# useful for handling different item types with a single interface
+# from itemadapter import ItemAdapter
+import pymongo
+
+
+class GbParsePipeline:
+    def process_item(self, item, spider):
+        return item
+
+
+class GbParseMongoPipeline:
+    def __init__(self):
+        db_client = pymongo.MongoClient("mongodb://localhost:27017")
+        self.db = db_client["gd_data_mining"]
+
+    def process_item(self, item, spider):
+        self.db[spider.name].update_one({"url": item["url"]}, {"$set": item}, upsert=True)
+        return item
